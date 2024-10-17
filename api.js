@@ -222,6 +222,22 @@ class BloxflipRaper {
             await this.browser.close();
         }
     }
+    
+    parse(thing) {
+        const match = thing.match(/^42\/([^,]+),\[([^,]+),(.*)\]$/);
+
+        if (!match) {
+            throw new Error("wtf");
+        }
+
+        const [, namespace, event, data] = match;
+
+        return {
+            namespace,
+            event: JSON.parse(event),
+            data: JSON.parse(data)
+        };
+    }
 }
 
 module.exports = BloxflipRaper;
