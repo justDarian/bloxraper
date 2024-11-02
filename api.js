@@ -48,18 +48,20 @@ class BloxflipRaper {
             await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}})
         }
 
+        // i like my bandwidth
         log("setting up request interception")
         await this.page.setRequestInterception(true);
         this.page.on('request', (request) => {
             const url = request.url()
-            if (["api.bloxflip.com", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom"].some(str => url.includes(str))) {
+            // todo: idk this list is good for now lol
+            if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
                 request.abort()
             } else {
                 request.continue()
             }
         });
 
-        await this.page.goto('https://bloxflip.com')
+        await this.page.goto('https://bloxflip.com/')
 
         log("clearing cloudflare data")
         await this.session.send('Network.clearBrowserCookies')
@@ -193,7 +195,7 @@ class BloxflipRaper {
     
 
     async on(clientId, event, callback) {
-        const callbackName = `raper_${clientId}_${event}`;
+        const callbackName = `raper_${clientId}_${event}${ Math.random().toString(36).substring(2, 5) }`;
         await this.page.exposeFunction(callbackName, callback);
         await this.page.evaluate((clientId, event, callbackName) => {
             const client = window.bloxflipClients.get(clientId);
@@ -224,6 +226,7 @@ class BloxflipRaper {
     }
     
     parse(thing) {
+        //credits to the regex creator i found on github
         const match = thing.match(/^42\/([^,]+),\[([^,]+),(.*)\]$/);
 
         if (!match) {
