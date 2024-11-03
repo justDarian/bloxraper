@@ -71,6 +71,7 @@ class BloxflipRaper {
 
         await this.page.evaluate(() => {
             window.bloxflipClients = new Map()
+            document.title = "bloxRaper instance"
         });
 
         this.browser.on('disconnected', () => {
