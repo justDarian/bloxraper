@@ -1,3 +1,5 @@
+// made by darian :3
+
 const puppeteer = require('puppeteer');
 
 const log = (data) => {
@@ -63,7 +65,7 @@ class BloxflipRaper {
 
         await this.page.goto('https://bloxflip.com/')
 
-        log("clearing cloudflare data")
+        log("clearing trace data")
         await this.session.send('Network.clearBrowserCookies')
         await this.page.evaluate(() => localStorage.clear())
 
@@ -155,7 +157,11 @@ class BloxflipRaper {
 
                 client.connect();
                 window.bloxflipClients.set(clientId, client);
-                client.readyPromise.then(resolve).catch(reject);
+
+                client.readyPromise
+                    .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+                    .then(resolve)
+                    .catch(reject);
             });
         }, clientId, auth, this.namespaces);
 
