@@ -1,252 +1,300 @@
-// made by darian :3
-
 const puppeteer = require('puppeteer');
 
 const log = (data) => {
-    console.log(`bloxRaper | ${data}`)
+    try {
+        console.log(`bloxRaper | ${data}`)
+    } catch {}
 }
 
 class BloxflipRaper {
     constructor({ debug = false} = {}) {
-        this.debug = debug;
-        this.namespaces = [
-            'chat', 'cups', 'blackjack', 'jackpot', 'rouletteV2', 'roulette',
-            'crash', 'wallet', 'marketplace', 'case-battles', 'mod-queue', 'feed', 'cloud-games'
-        ]
-        this.clients = new Map()
-        this.browser = null
-        this.page = null
-        this.session = null
-        this.ready = this.initialize()
+        try {
+            this.debug = debug;
+            this.namespaces = [
+                'chat', 'cups', 'blackjack', 'jackpot', 'rouletteV2', 'roulette',
+                'crash', 'wallet', 'marketplace', 'case-battles', 'mod-queue', 'feed', 'cloud-games'
+            ]
+            this.clients = new Map()
+            this.browser = null
+            this.page = null
+            this.session = null
+            this.ready = this.initialize()
+        } catch {}
     }
 
     async initialize() {
-        const launchOptions = {
-            headless: false,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--single-process']
-        };
+        try {
+            const launchOptions = {
+                headless: false,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--single-process']
+            };
 
-        if (!this.debug) {
-            launchOptions.args.push(
-                '--window-position=99999,99999', 
-                '--window-size=1,1',
-                '--disable-extensions',
-                '--disable-gpu',
-                '--mute-audio',
-                '--disable-background-networking',
-                '--disable-default-apps',
-                '--no-default-browser-check'
-            );
-            launchOptions.defaultViewport = { width: 1, height: 1 };
-        }
-
-        log('creating an instance...')
-        this.browser = await puppeteer.launch(launchOptions)
-        this.page = (await this.browser.pages())[0]
-        this.session = await this.page.target().createCDPSession()
-
-        if (!this.debug) {
-            const {windowId} = await this.session.send('Browser.getWindowForTarget')
-            await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}})
-        }
-
-        // i like my bandwidth
-        log("setting up request interception")
-        await this.page.setRequestInterception(true);
-        this.page.on('request', (request) => {
-            const url = request.url()
-            // todo: idk this list is good for now lol
-            if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
-                request.abort()
-            } else {
-                request.continue()
+            if (!this.debug) {
+                launchOptions.args.push(
+                    '--window-position=99999,99999', 
+                    '--window-size=1,1',
+                    '--disable-extensions',
+                    '--disable-gpu',
+                    '--mute-audio',
+                    '--disable-background-networking',
+                    '--disable-default-apps',
+                    '--no-default-browser-check'
+                );
+                launchOptions.defaultViewport = { width: 1, height: 1 };
             }
-        });
 
-        await this.page.goto('https://bloxflip.com/')
+            log('creating an instance...')
+            this.browser = await puppeteer.launch(launchOptions)
+            this.page = (await this.browser.pages())[0]
+            this.session = await this.page.target().createCDPSession()
 
-        log("clearing trace data")
-        await this.session.send('Network.clearBrowserCookies')
-        await this.page.evaluate(() => localStorage.clear())
+            if (!this.debug) {
+                const {windowId} = await this.session.send('Browser.getWindowForTarget')
+                await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}})
+            }
 
-        await this.page.evaluate(() => {
-            window.bloxflipClients = new Map()
-            document.title = "bloxRaper instance"
-        });
+            log("setting up request interception")
+            await this.page.setRequestInterception(true);
+            this.page.on('request', (request) => {
+                try {
+                    const url = request.url()
+                    if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
+                        request.abort()
+                    } else {
+                        request.continue()
+                    }
+                } catch {}
+            });
 
-        this.browser.on('disconnected', () => {
-            process.exit(0);
-        });
+            await this.page.goto('https://bloxflip.com/')
 
-        log("init")
-        return true
+            log("clearing trace data")
+            await this.session.send('Network.clearBrowserCookies')
+            await this.page.evaluate(() => {
+                try {
+                    localStorage.clear()
+                } catch {}
+            })
+
+            await this.page.evaluate(() => {
+                try {
+                    window.bloxflipClients = new Map()
+                    document.title = "bloxRaper instance"
+                } catch {}
+            });
+
+            this.browser.on('disconnected', () => {
+                try {
+                    process.exit(0);
+                } catch {}
+            });
+
+            log("init")
+            return true
+        } catch {}
     }
 
     async connect(auth) {
-        await this.ready;
-        const clientId = Date.now().toString();
-        await this.page.evaluate((clientId, auth, namespaces) => {
-            return new Promise((resolve, reject) => {
-                const client = {
-                    auth,
-                    namespaces,
-                    ws: null,
-                    isReady: false,
-                    readyPromise: null,
-                    eventListeners: {},
+        try {
+            await this.ready;
+            const clientId = Date.now().toString();
+            await this.page.evaluate((clientId, auth, namespaces) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const client = {
+                            auth,
+                            namespaces,
+                            ws: null,
+                            isReady: false,
+                            readyPromise: null,
+                            eventListeners: {},
 
-                    connect: function() {
-                        this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
-                        this.readyPromise = new Promise((resolveReady, rejectReady) => {
-                            this.ws.onopen = async () => {
+                            connect: function() {
                                 try {
-                                    // init
-                                    await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
-                                    setTimeout(async () => {
-                                        // authenicate
-                                        await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
-                                        this.isReady = true;
+                                    this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
+                                    this.readyPromise = new Promise((resolveReady, rejectReady) => {
+                                        try {
+                                            this.ws.onopen = async () => {
+                                                try {
+                                                    await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
+                                                    setTimeout(async () => {
+                                                        try {
+                                                            await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
+                                                            this.isReady = true;
+                                                            setInterval(() => {
+                                                                try {
+                                                                    this.ws.send("2")
+                                                                } catch {}
+                                                            }, 20000);
+                                                            this.ws.timeout = 3000000;
+                                                            resolveReady();
+                                                        } catch {}
+                                                    }, 500);
+                                                } catch {}
+                                            };
+                                            this.ws.onerror = rejectReady;
+                                        } catch {}
+                                    });
+                                    this.ws.onmessage = (event) => {
+                                        try {
+                                            if (this.eventListeners['message']) {
+                                                this.eventListeners['message'].forEach(callback => {
+                                                    try {
+                                                        callback(event.data)
+                                                    } catch {}
+                                                });
+                                            }
+                                        } catch {}
+                                    };
+                                    this.ws.onclose = () => {
+                                        try {
+                                            if (this.eventListeners['close']) {
+                                                this.eventListeners['close'].forEach(callback => {
+                                                    try {
+                                                        callback()
+                                                    } catch {}
+                                                });
+                                            }
+                                        } catch {}
+                                    };
+                                } catch {}
+                            },
 
-                                        // prevent socket closing
-                                        setInterval(() => this.ws.send("2"), 20000);
-                                        this.ws.timeout = 3000000;
+                            emit: async function(namespace, event, data) {
+                                try {
+                                    await this.readyPromise;
+                                    this.ws.send(`42/${namespace},[${JSON.stringify(event)},${JSON.stringify(data)}]`);
+                                } catch {}
+                            },
 
-                                        resolveReady();
-                                    }, 500);
-                                } catch (error) {
-                                    rejectReady(error);
-                                }
-                            };
+                            send: async function(data) {
+                                try {
+                                    await this.readyPromise;
+                                    this.ws.send(data);
+                                } catch {}
+                            },
 
-                            this.ws.onerror = rejectReady;
-                        });
-                        this.ws.onmessage = (event) => {
-                            if (this.eventListeners['message']) {
-                                this.eventListeners['message'].forEach(callback => callback(event.data));
+                            on: function(event, callback) {
+                                try {
+                                    if (!this.eventListeners[event]) {
+                                        this.eventListeners[event] = [];
+                                    }
+                                    this.eventListeners[event].push(callback);
+                                } catch {}
+                            },
+
+                            close: function() {
+                                try {
+                                    if (this.ws) {
+                                        this.ws.close();
+                                    }
+                                } catch {}
                             }
                         };
-                        this.ws.onclose = () => {
-                            if (this.eventListeners['close']) {
-                                this.eventListeners['close'].forEach(callback => callback());
-                            }
-                        };
-                    },
 
-                    emit: async function(namespace, event, data) {
-                        await this.readyPromise;
-                        this.ws.send(`42/${namespace},[${JSON.stringify(event)},${JSON.stringify(data)}]`);
-                    },
+                        client.connect();
+                        window.bloxflipClients.set(clientId, client);
 
-                    send: async function(data) {
-                        await this.readyPromise;
-                        this.ws.send(data);
-                    },
+                        client.readyPromise
+                            .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+                            .then(resolve)
+                            .catch(reject);
+                    } catch {}
+                });
+            }, clientId, auth, this.namespaces);
 
-                    on: function(event, callback) {
-                        if (!this.eventListeners[event]) {
-                            this.eventListeners[event] = [];
-                        }
-                        this.eventListeners[event].push(callback);
-                    },
-
-                    close: function() {
-                        if (this.ws) {
-                            this.ws.close();
-                        }
-                    }
-                };
-
-                client.connect();
-                window.bloxflipClients.set(clientId, client);
-
-                client.readyPromise
-                    .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
-                    .then(resolve)
-                    .catch(reject);
+            this.clients.set(clientId, {
+                emit: this.emit.bind(this, clientId),
+                send: this.send.bind(this, clientId),
+                on: this.on.bind(this, clientId),
+                close: this.closeClient.bind(this, clientId)
             });
-        }, clientId, auth, this.namespaces);
 
-        this.clients.set(clientId, {
-            emit: this.emit.bind(this, clientId),
-            send: this.send.bind(this, clientId),
-            on: this.on.bind(this, clientId),
-            close: this.closeClient.bind(this, clientId)
-        });
-
-        return this.clients.get(clientId);
+            return this.clients.get(clientId);
+        } catch {}
     }
 
     async emit(clientId, namespace, event, data) {
         try {
             return await this.page.evaluate((clientId, namespace, event, data) => {
-                const client = window.bloxflipClients.get(clientId);
-                return client.emit(namespace, event, data);
+                try {
+                    const client = window.bloxflipClients.get(clientId);
+                    return client.emit(namespace, event, data);
+                } catch {}
             }, clientId, namespace, event, data);
-        } catch (error) {
-            // i dont think its a good idea logging errors since packets drop so often
-            //console.error(error);
-        }
+        } catch {}
     }
     
     async send(clientId, data) {
         try {
             return await this.page.evaluate((clientId, data) => {
-                const client = window.bloxflipClients.get(clientId);
-                return client.send(data);
+                try {
+                    const client = window.bloxflipClients.get(clientId);
+                    return client.send(data);
+                } catch {}
             }, clientId, data);
-        } catch (error) {
-            // same here
-            //console.error(error);
-        }
+        } catch {}
     }
-    
 
     async on(clientId, event, callback) {
-        const callbackName = `raper_${clientId}_${event}${ Math.random().toString(36).substring(2, 5) }`;
-        await this.page.exposeFunction(callbackName, callback);
-        await this.page.evaluate((clientId, event, callbackName) => {
-            const client = window.bloxflipClients.get(clientId);
-            client.on(event, (data) => {
-                window[callbackName](data);
-            });
-        }, clientId, event, callbackName);
+        try {
+            const callbackName = `raper_${clientId}_${event}${ Math.random().toString(36).substring(2, 5) }`;
+            await this.page.exposeFunction(callbackName, callback);
+            await this.page.evaluate((clientId, event, callbackName) => {
+                try {
+                    const client = window.bloxflipClients.get(clientId);
+                    client.on(event, (data) => {
+                        try {
+                            window[callbackName](data);
+                        } catch {}
+                    });
+                } catch {}
+            }, clientId, event, callbackName);
+        } catch {}
     }
 
     async closeClient(clientId) {
-        await this.page.evaluate((clientId) => {
-            const client = window.bloxflipClients.get(clientId);
-            if (client) {
-                client.close();
-                window.bloxflipClients.delete(clientId);
-            }
-        }, clientId);
-        this.clients.delete(clientId);
+        try {
+            await this.page.evaluate((clientId) => {
+                try {
+                    const client = window.bloxflipClients.get(clientId);
+                    if (client) {
+                        client.close();
+                        window.bloxflipClients.delete(clientId);
+                    }
+                } catch {}
+            }, clientId);
+            this.clients.delete(clientId);
+        } catch {}
     }
 
     async close() {
-        for (const clientId of this.clients.keys()) {
-            await this.closeClient(clientId);
-        }
-        if (this.browser) {
-            await this.browser.close();
-        }
+        try {
+            for (const clientId of this.clients.keys()) {
+                await this.closeClient(clientId);
+            }
+            if (this.browser) {
+                await this.browser.close();
+            }
+        } catch {}
     }
     
     parse(thing) {
-        //credits to the regex creator i found on github
-        const match = thing.match(/^42\/([^,]+),\[([^,]+),(.*)\]$/);
+        try {
+            const match = thing.match(/^42\/([^,]+),\[([^,]+),(.*)\]$/);
 
-        if (!match) {
-            throw new Error("wtf");
-        }
+            if (!match) {
+                throw new Error("wtf");
+            }
 
-        const [, namespace, event, data] = match;
+            const [, namespace, event, data] = match;
 
-        return {
-            namespace,
-            event: JSON.parse(event),
-            data: JSON.parse(data)
-        };
+            return {
+                namespace,
+                event: JSON.parse(event),
+                data: JSON.parse(data)
+            };
+        } catch {}
     }
 }
 
