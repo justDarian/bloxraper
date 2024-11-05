@@ -49,9 +49,9 @@ class bloxRaper {
             }
 
             log("launching instance")
-            this.browser = await plugin.launch(launchOptions);
-            this.page = await this.browser.newPage();
-            this.session = await this.page.target().createCDPSession();
+            this.browser = await puppeteer.launch(launchOptions)
+            this.page = (await this.browser.pages())[0]
+            this.session = await this.page.target().createCDPSession()
 
             if (!this.debug) {
                 const {windowId} = await this.session.send('Browser.getWindowForTarget');
