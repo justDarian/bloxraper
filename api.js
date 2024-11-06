@@ -1,7 +1,6 @@
 // made by darian :3
 
-const puppeteerWithFingerprints = require('puppeteer-with-fingerprints');
-const { plugin } = puppeteerWithFingerprints;
+const { plugin } = require('puppeteer-with-fingerprints');
 
 process.env.FINGERPRINT_SILENT = 'true';
 
@@ -49,7 +48,7 @@ class bloxRaper {
             }
 
             log("launching instance")
-            this.browser = await puppeteer.launch(launchOptions)
+            this.browser = await plugin.launch(launchOptions)
             this.page = (await this.browser.pages())[0]
             this.session = await this.page.target().createCDPSession()
 
