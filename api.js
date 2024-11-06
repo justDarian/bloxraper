@@ -1,10 +1,9 @@
 // made by darian :3
+// useful when running the API on a vps and cloudflare blocks stuffs
+const puppeteerWithFingerprints = require('puppeteer-with-fingerprints');
+const { plugin } = puppeteerWithFingerprints;
 
-const puppeteer = require('puppeteer');
-const puppeteerExtra = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-
-puppeteerExtra.use(StealthPlugin());
+process.env.FINGERPRINT_SILENT = 'true';
 
 const log = (data) => {
     try {
@@ -23,16 +22,19 @@ class bloxRaper {
         this.browser = null;
         this.page = null;
         this.session = null;
+        plugin.setServiceKey('');
         this.ready = this.initialize();
     }
 
     async initialize() {
         try {
-            log("launching instance")
+            log("fetching fingerprint")
+            const fingerprint = await plugin.fetch({ tags: ['Microsoft Windows', 'Chrome'] });
+            plugin.useFingerprint(fingerprint);
+
             const launchOptions = {
                 headless: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                executablePath: puppeteer.executablePath()
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
             };
 
             if (!this.debug) {
@@ -46,6 +48,7 @@ class bloxRaper {
                 launchOptions.defaultViewport = { width: 1, height: 1 };
             }
 
+            log("launching instance")
             this.browser = await puppeteer.launch(launchOptions)
             this.page = (await this.browser.pages())[0]
             this.session = await this.page.target().createCDPSession()
