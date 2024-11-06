@@ -1,8 +1,9 @@
 // made by darian :3
 
-const { plugin } = require('puppeteer-with-fingerprints');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
-process.env.FINGERPRINT_SILENT = 'true';
+puppeteer.use(StealthPlugin());
 
 const log = (data) => {
     try {
@@ -21,19 +22,16 @@ class bloxRaper {
         this.browser = null;
         this.page = null;
         this.session = null;
-        plugin.setServiceKey('');
         this.ready = this.initialize();
     }
 
     async initialize() {
         try {
-            log("fetching fingerprint")
-            const fingerprint = await plugin.fetch({ tags: ['Microsoft Windows', 'Chrome'] });
-            plugin.useFingerprint(fingerprint);
-
+            log("launching instance")
             const launchOptions = {
                 headless: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                executablePath: puppeteer.executablePath()
             };
 
             if (!this.debug) {
@@ -47,8 +45,7 @@ class bloxRaper {
                 launchOptions.defaultViewport = { width: 1, height: 1 };
             }
 
-            log("launching instance")
-            this.browser = await plugin.launch(launchOptions)
+            this.browser = await puppeteer.launch(launchOptions)
             this.page = (await this.browser.pages())[0]
             this.session = await this.page.target().createCDPSession()
 
@@ -108,12 +105,11 @@ class bloxRaper {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
-                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1000)})
+                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1500)})
 
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
-                                                            await new Promise((res,rej)=>{setTimeout(()=>{res()},500)})
                                                             await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
                                                             this.ws.send("2")
                                                             this.isReady = true;
