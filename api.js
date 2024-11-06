@@ -1,5 +1,5 @@
 // made by darian :3
-// useful when running the API on a vps and cloudflare blocks stuffs
+
 const puppeteerWithFingerprints = require('puppeteer-with-fingerprints');
 const { plugin } = puppeteerWithFingerprints;
 
@@ -109,10 +109,13 @@ class bloxRaper {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
+                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1500)})
+
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
                                                             await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
+                                                            this.ws.send("2")
                                                             this.isReady = true;
                                                             setInterval(() => {
                                                                 try {
