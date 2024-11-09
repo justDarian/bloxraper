@@ -108,8 +108,6 @@ class bloxRaper {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
-                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1000)})
-
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
