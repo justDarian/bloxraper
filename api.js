@@ -1,13 +1,14 @@
-// made by official.darian :3
+// made by darian :3
 
-const udbrowser = require("undetected-browser");
-const puppeteer = require("puppeteer");
+const { plugin } = require('puppeteer-with-fingerprints');
+
+process.env.FINGERPRINT_SILENT = 'true';
 
 const log = (data) => {
     try {
-        console.log(`bloxRaper | ${data}`);
+        console.log(`bloxRaper | ${data}`)
     } catch {}
-};
+}
 
 class bloxRaper {
     constructor({ debug = false } = {}) {
@@ -20,12 +21,16 @@ class bloxRaper {
         this.browser = null;
         this.page = null;
         this.session = null;
+        plugin.setServiceKey('');
         this.ready = this.initialize();
     }
 
     async initialize() {
         try {
-            log("launching instance");
+            log("fetching fingerprint")
+            const fingerprint = await plugin.fetch({ tags: ['Microsoft Windows', 'Chrome'] });
+            plugin.useFingerprint(fingerprint);
+
             const launchOptions = {
                 headless: false,
                 args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -34,7 +39,7 @@ class bloxRaper {
             if (!this.debug) {
                 launchOptions.args.push(
                     '--window-position=99999,99999',
-                    '--window-size=1,1',
+                    '--window-size=1,1', 
                     '--disable-extensions',
                     '--disable-gpu',
                     '--mute-audio'
@@ -42,22 +47,22 @@ class bloxRaper {
                 launchOptions.defaultViewport = { width: 1, height: 1 };
             }
 
-            this.udinstance = new udbrowser(await puppeteer.launch(launchOptions));
-            this.browser = await this.udinstance.getBrowser();
+            log("launching instance")
+            this.browser = await plugin.launch(launchOptions)
             this.page = (await this.browser.pages())[0]
-            this.session = await this.page.target().createCDPSession();
+            this.session = await this.page.target().createCDPSession()
 
             if (!this.debug) {
-                const { windowId } = await this.session.send('Browser.getWindowForTarget');
-                await this.session.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'minimized' } });
+                const {windowId} = await this.session.send('Browser.getWindowForTarget');
+                await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}});
             }
 
-            log("setting up request interception");
+            log("setting up request interception")
             await this.page.setRequestInterception(true);
             this.page.on('request', (request) => {
                 try {
                     const url = request.url();
-                    if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom", "growthbook"].some(str => url.includes(str))) {
+                    if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
                         request.abort();
                     } else {
                         request.continue();
@@ -67,7 +72,7 @@ class bloxRaper {
 
             await this.page.goto('https://bloxflip.com/');
 
-            log("clearing data");
+            log("clearing data")
             await this.session.send('Network.clearBrowserCookies');
             await this.page.evaluate(() => {
                 try {
@@ -76,7 +81,7 @@ class bloxRaper {
                 } catch {}
             });
 
-            log("init");
+            log("init")
             return true;
         } catch {}
     }
@@ -92,19 +97,23 @@ class bloxRaper {
                             auth,
                             namespaces,
                             ws: null,
-                            isReady: null,
+                            isReady: false,
+                            readyPromise: null,
                             eventListeners: {},
 
                             connect: function() {
                                 try {
                                     this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
-                                    this.isReady = new Promise((resolveReady, rejectReady) => {
+                                    this.readyPromise = new Promise((resolveReady, rejectReady) => {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
+                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1000)})
+
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
+                                                            await new Promise((res,rej)=>{setTimeout(()=>{res()},500)})
                                                             await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
                                                             this.ws.send("2")
                                                             this.isReady = true;
@@ -149,14 +158,14 @@ class bloxRaper {
 
                             emit: async function(namespace, event, data) {
                                 try {
-                                    await this.isReady;
+                                    await this.readyPromise;
                                     this.ws.send(`42/${namespace},[${JSON.stringify(event)},${JSON.stringify(data)}]`);
                                 } catch {}
                             },
 
                             send: async function(data) {
                                 try {
-                                    await this.isReady;
+                                    await this.readyPromise;
                                     this.ws.send(data);
                                 } catch {}
                             },
@@ -182,7 +191,7 @@ class bloxRaper {
                         client.connect();
                         window.bloxflipClients.set(clientId, client);
 
-                        client.isReady
+                        client.readyPromise
                             .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
                             .then(resolve)
                             .catch(reject);
