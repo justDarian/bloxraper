@@ -1,15 +1,13 @@
-// made by darian :3
+// made by official.darian :3
 
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-
-puppeteer.use(StealthPlugin());
+const udbrowser = require("undetected-browser");
+const puppeteer = require("puppeteer");
 
 const log = (data) => {
     try {
-        console.log(`bloxRaper | ${data}`)
+        console.log(`bloxRaper | ${data}`);
     } catch {}
-}
+};
 
 class bloxRaper {
     constructor({ debug = false } = {}) {
@@ -27,17 +25,16 @@ class bloxRaper {
 
     async initialize() {
         try {
-            log("launching instance")
+            log("launching instance");
             const launchOptions = {
                 headless: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                executablePath: puppeteer.executablePath()
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
             };
 
             if (!this.debug) {
                 launchOptions.args.push(
                     '--window-position=99999,99999',
-                    '--window-size=1,1', 
+                    '--window-size=1,1',
                     '--disable-extensions',
                     '--disable-gpu',
                     '--mute-audio'
@@ -45,21 +42,22 @@ class bloxRaper {
                 launchOptions.defaultViewport = { width: 1, height: 1 };
             }
 
-            this.browser = await puppeteer.launch(launchOptions)
+            this.udinstance = new udbrowser(await puppeteer.launch(launchOptions));
+            this.browser = await this.udinstance.getBrowser();
             this.page = (await this.browser.pages())[0]
-            this.session = await this.page.target().createCDPSession()
+            this.session = await this.page.target().createCDPSession();
 
             if (!this.debug) {
-                const {windowId} = await this.session.send('Browser.getWindowForTarget');
-                await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}});
+                const { windowId } = await this.session.send('Browser.getWindowForTarget');
+                await this.session.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'minimized' } });
             }
 
-            log("setting up request interception")
+            log("setting up request interception");
             await this.page.setRequestInterception(true);
             this.page.on('request', (request) => {
                 try {
                     const url = request.url();
-                    if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
+                    if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom", "growthbook"].some(str => url.includes(str))) {
                         request.abort();
                     } else {
                         request.continue();
@@ -69,7 +67,7 @@ class bloxRaper {
 
             await this.page.goto('https://bloxflip.com/');
 
-            log("clearing data")
+            log("clearing data");
             await this.session.send('Network.clearBrowserCookies');
             await this.page.evaluate(() => {
                 try {
@@ -78,7 +76,7 @@ class bloxRaper {
                 } catch {}
             });
 
-            log("init")
+            log("init");
             return true;
         } catch {}
     }
@@ -94,7 +92,6 @@ class bloxRaper {
                             auth,
                             namespaces,
                             ws: null,
-                            isReady: false,
                             isReady: null,
                             eventListeners: {},
 
@@ -105,8 +102,6 @@ class bloxRaper {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
-                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1500)})
-
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
