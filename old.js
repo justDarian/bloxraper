@@ -1,4 +1,9 @@
-const puppeteer = require('puppeteer');
+// made by darian :3
+
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+puppeteer.use(StealthPlugin());
 
 const log = (data) => {
     try {
@@ -6,91 +11,75 @@ const log = (data) => {
     } catch {}
 }
 
-class BloxflipRaper {
-    constructor({ debug = false} = {}) {
-        try {
-            this.debug = debug;
-            this.namespaces = [
-                'chat', 'cups', 'blackjack', 'jackpot', 'rouletteV2', 'roulette',
-                'crash', 'wallet', 'marketplace', 'case-battles', 'mod-queue', 'feed', 'cloud-games'
-            ]
-            this.clients = new Map()
-            this.browser = null
-            this.page = null
-            this.session = null
-            this.ready = this.initialize()
-        } catch {}
+class bloxRaper {
+    constructor({ debug = false } = {}) {
+        this.debug = debug;
+        this.namespaces = [
+            'chat', 'cups', 'blackjack', 'jackpot', 'rouletteV2', 'roulette',
+            'crash', 'wallet', 'marketplace', 'case-battles', 'mod-queue', 'feed', 'cloud-games'
+        ];
+        this.clients = new Map();
+        this.browser = null;
+        this.page = null;
+        this.session = null;
+        this.ready = this.initialize();
     }
 
     async initialize() {
         try {
+            log("launching instance")
             const launchOptions = {
                 headless: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--single-process']
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                executablePath: puppeteer.executablePath()
             };
 
             if (!this.debug) {
                 launchOptions.args.push(
-                    '--window-position=99999,99999', 
-                    '--window-size=1,1',
+                    '--window-position=99999,99999',
+                    '--window-size=1,1', 
                     '--disable-extensions',
                     '--disable-gpu',
-                    '--mute-audio',
-                    '--disable-background-networking',
-                    '--disable-default-apps',
-                    '--no-default-browser-check'
+                    '--mute-audio'
                 );
                 launchOptions.defaultViewport = { width: 1, height: 1 };
             }
 
-            log('creating an instance...')
             this.browser = await puppeteer.launch(launchOptions)
             this.page = (await this.browser.pages())[0]
             this.session = await this.page.target().createCDPSession()
 
             if (!this.debug) {
-                const {windowId} = await this.session.send('Browser.getWindowForTarget')
-                await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}})
+                const {windowId} = await this.session.send('Browser.getWindowForTarget');
+                await this.session.send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'minimized'}});
             }
 
             log("setting up request interception")
             await this.page.setRequestInterception(true);
             this.page.on('request', (request) => {
                 try {
-                    const url = request.url()
+                    const url = request.url();
                     if (["render-headshot", "png", "mp3", "wav", "stripe", "tiktok", "taboola", "onesignal", "css", "intercom","growthbook"].some(str => url.includes(str))) {
-                        request.abort()
+                        request.abort();
                     } else {
-                        request.continue()
+                        request.continue();
                     }
                 } catch {}
             });
 
-            await this.page.goto('https://bloxflip.com/')
+            await this.page.goto('https://bloxflip.com/');
 
-            log("clearing trace data")
-            await this.session.send('Network.clearBrowserCookies')
+            log("clearing data")
+            await this.session.send('Network.clearBrowserCookies');
             await this.page.evaluate(() => {
                 try {
-                    localStorage.clear()
-                } catch {}
-            })
-
-            await this.page.evaluate(() => {
-                try {
-                    window.bloxflipClients = new Map()
-                    document.title = "bloxRaper instance"
-                } catch {}
-            });
-
-            this.browser.on('disconnected', () => {
-                try {
-                    process.exit(0);
+                    localStorage.clear();
+                    window.bloxflipClients = new Map();
                 } catch {}
             });
 
             log("init")
-            return true
+            return true;
         } catch {}
     }
 
@@ -106,20 +95,23 @@ class BloxflipRaper {
                             namespaces,
                             ws: null,
                             isReady: false,
-                            readyPromise: null,
+                            isReady: null,
                             eventListeners: {},
 
                             connect: function() {
                                 try {
                                     this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
-                                    this.readyPromise = new Promise((resolveReady, rejectReady) => {
+                                    this.isReady = new Promise((resolveReady, rejectReady) => {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
+                                                    await new Promise((res,rej)=>{setTimeout(()=>{res()},1500)})
+
                                                     await Promise.all(this.namespaces.map(namespace => this.ws.send(`40/${namespace},`)));
                                                     setTimeout(async () => {
                                                         try {
                                                             await Promise.all(this.namespaces.map(namespace => this.ws.send(`42/${namespace},["auth","${this.auth}"]`)));
+                                                            this.ws.send("2")
                                                             this.isReady = true;
                                                             setInterval(() => {
                                                                 try {
@@ -162,14 +154,14 @@ class BloxflipRaper {
 
                             emit: async function(namespace, event, data) {
                                 try {
-                                    await this.readyPromise;
+                                    await this.isReady;
                                     this.ws.send(`42/${namespace},[${JSON.stringify(event)},${JSON.stringify(data)}]`);
                                 } catch {}
                             },
 
                             send: async function(data) {
                                 try {
-                                    await this.readyPromise;
+                                    await this.isReady;
                                     this.ws.send(data);
                                 } catch {}
                             },
@@ -195,7 +187,7 @@ class BloxflipRaper {
                         client.connect();
                         window.bloxflipClients.set(clientId, client);
 
-                        client.readyPromise
+                        client.isReady
                             .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
                             .then(resolve)
                             .catch(reject);
@@ -282,13 +274,10 @@ class BloxflipRaper {
     parse(thing) {
         try {
             const match = thing.match(/^42\/([^,]+),\[([^,]+),(.*)\]$/);
-
             if (!match) {
                 throw new Error("wtf");
             }
-
             const [, namespace, event, data] = match;
-
             return {
                 namespace,
                 event: JSON.parse(event),
@@ -298,4 +287,4 @@ class BloxflipRaper {
     }
 }
 
-module.exports = BloxflipRaper;
+module.exports = bloxRaper;
