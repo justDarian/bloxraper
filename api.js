@@ -95,13 +95,13 @@ class bloxRaper {
                             namespaces,
                             ws: null,
                             isReady: false,
-                            readyPromise: null,
+                            isReady: null,
                             eventListeners: {},
 
                             connect: function() {
                                 try {
                                     this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
-                                    this.readyPromise = new Promise((resolveReady, rejectReady) => {
+                                    this.isReady = new Promise((resolveReady, rejectReady) => {
                                         try {
                                             this.ws.onopen = async () => {
                                                 try {
@@ -154,14 +154,14 @@ class bloxRaper {
 
                             emit: async function(namespace, event, data) {
                                 try {
-                                    await this.readyPromise;
+                                    await this.isReady;
                                     this.ws.send(`42/${namespace},[${JSON.stringify(event)},${JSON.stringify(data)}]`);
                                 } catch {}
                             },
 
                             send: async function(data) {
                                 try {
-                                    await this.readyPromise;
+                                    await this.isReady;
                                     this.ws.send(data);
                                 } catch {}
                             },
@@ -187,7 +187,7 @@ class bloxRaper {
                         client.connect();
                         window.bloxflipClients.set(clientId, client);
 
-                        client.readyPromise
+                        client.isReady
                             .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
                             .then(resolve)
                             .catch(reject);
