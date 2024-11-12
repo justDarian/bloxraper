@@ -1,7 +1,8 @@
-// made by official.darian :3
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const udbrowser = require('undetected-browser');
 
-const udbrowser = require("undetected-browser");
-const puppeteer = require("puppeteer");
+puppeteer.use(StealthPlugin());
 
 const log = (data) => {
     try {
@@ -44,7 +45,7 @@ class bloxRaper {
 
             this.udinstance = new udbrowser(await puppeteer.launch(launchOptions));
             this.browser = await this.udinstance.getBrowser();
-            this.page = (await this.browser.pages())[0]
+            this.page = (await this.browser.pages())[0];
             this.session = await this.page.target().createCDPSession();
 
             if (!this.debug) {
@@ -78,7 +79,7 @@ class bloxRaper {
 
             log("init");
             return true;
-        } catch {}
+        } catch (e){console.log(e)}
     }
 
     async connect(auth) {
@@ -86,6 +87,7 @@ class bloxRaper {
             await this.ready;
             const clientId = Date.now().toString();
             await this.page.evaluate((clientId, auth, namespaces) => {
+                document.title = "bloxraper instance" // clout
                 return new Promise((resolve, reject) => {
                     try {
                         const client = {
