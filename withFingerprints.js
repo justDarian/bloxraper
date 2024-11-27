@@ -70,7 +70,7 @@ class bloxRaper {
                 } catch {}
             });
 
-            await this.page.goto('https://bloxflip.com/');
+            await this.page.goto('https://bflip.com/');
 
             log("clearing data")
             await this.session.send('Network.clearBrowserCookies');
@@ -103,7 +103,7 @@ class bloxRaper {
 
                             connect: function() {
                                 try {
-                                    this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
+                                    this.ws = new WebSocket('wss://ws.bflip.com/socket.io/?EIO=3&transport=websocket');
                                     this.readyPromise = new Promise((resolveReady, rejectReady) => {
                                         try {
                                             this.ws.onopen = async () => {
