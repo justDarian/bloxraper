@@ -95,7 +95,7 @@ class bloxRaper {
 
                             connect: function() {
                                 try {
-                                    this.ws = new WebSocket('wss://ws.bloxflip.com/socket.io/?EIO=3&transport=websocket');
+                                    this.ws = new WebSocket('wss://ws.bflip.com/socket.io/?EIO=3&transport=websocket');
                                     this.isReady = new Promise((resolveReady, rejectReady) => {
                                         try {
                                             this.ws.onopen = async () => {
