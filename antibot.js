@@ -63,7 +63,7 @@ class bloxRaper {
                 } catch {}
             });
 
-            await this.page.goto('https://bloxflip.com/');
+            await this.page.goto('https://bflip.com/');
 
             log("clearing data");
             await this.session.send('Network.clearBrowserCookies');
